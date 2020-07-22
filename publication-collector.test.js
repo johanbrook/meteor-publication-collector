@@ -183,7 +183,7 @@ describe('PublicationCollector', () => {
       const collector = new PublicationCollector();
 
       collector.collect('publicationReturningNothing', readyCallback);
-      assert.isTrue(readyCallback.notCalled);
+      assert.isTrue(readyCallback.calledOnce);
 
       done();
     });
