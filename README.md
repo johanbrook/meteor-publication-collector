@@ -35,16 +35,21 @@ This package is server-only and can't be imported on the client.
 ```js
 // server/myPublication.test.js
 
-import { PublicationCollector } from 'meteor/johanbrook:publication-collector';
+import { PublicationCollector } from "meteor/johanbrook:publication-collector";
 
-describe('myPublication', function() {
-  it('should publish 10 documents', function(done) {
+describe("myPublication", function () {
+  it("should publish 10 documents", function (done) {
     const collector = new PublicationCollector({ userId: Random.id() });
 
-    collector.collect('myPublication', firstPublicationArg, secondPublicationArg, (collections) => {
-      assert.equal(collections.myCollection.length, 10);
-      done();
-    });
+    collector.collect(
+      "myPublication",
+      firstPublicationArg,
+      secondPublicationArg,
+      (collections) => {
+        assert.equal(collections.myCollection.length, 10);
+        done();
+      }
+    );
   });
 });
 ```
@@ -56,6 +61,7 @@ const collector = new PublicationCollector(opts);
 ```
 
 `opts` may have the following attributes:
+
 - `userId`: Add a `this.userId` to the publication's context
 - `delayInMs`: By default, `collect` callbacks are called when the publication is ready. If you use this option, the callbacks will be called `delayInMs` milliseconds after the publication is ready.
 
@@ -67,7 +73,7 @@ An instance of `PublicationCollector` also is an `EventEmitter`, and emits a `re
 collector.collect(publicationName, [publicationArgs..., callback]);
 ```
 
-- `publicationName (String)`:  the name of the publication (String)
+- `publicationName (String)`: the name of the publication (String)
 - `publicationArgs`: zero or more arguments to the publication
 - `callback (Function)`: Optional. The function to be called when the publication is ready. Will be called with a `collections` object.
 
@@ -76,9 +82,14 @@ Returns a Promise which resolves to a `collections` object.
 The `collections` value is an object containing key:value pairs where the key is the name of a collection that the publication published and the value is an array of the documents that were published in that collection.
 
 ```js
-collector.collect('myPublication', firstPublicationArg, secondPublicationArg, (collections) => {
-  assert.equal(collections.myCollection.length, 10);
-});
+collector.collect(
+  "myPublication",
+  firstPublicationArg,
+  secondPublicationArg,
+  (collections) => {
+    assert.equal(collections.myCollection.length, 10);
+  }
+);
 ```
 
 or use Promises:
@@ -127,11 +138,13 @@ Based on https://github.com/stubailo/meteor-rest/blob/devel/packages/rest/http-s
 
 ## Releases
 
+- `1.2.0`
+  - Add support for async publication
 - `1.1.0`
   - Pin versions to Meteor@>=1.3.
   - Throw error when there's no publication for the provided name.
   - Upgrade dependencies.
-  - Add support for Promises in the `.collect()` method. **Note:** This breaks tests that rely on errors being thrown in the `collect()` method (see [#36](https://github.com/johanbrook/meteor-publication-collector/issues/36)).
+     - Add support for Promises in the `.collect()` method. **Note:** This breaks tests that rely on errors being thrown in the `collect()` method (see [#36](https://github.com/johanbrook/meteor-publication-collector/issues/36)).
 - `1.0.10` - Always stop the publication when an error is thrown in the PublicationCollector callback. Thanks @SimonSimCity !
 - `1.0.9` - Fix bug in 1.0.8 regarding empty array return. Thanks @nkahnfr !
 - `1.0.8` - Fix support for publications returning nothing (an empty array). Thanks @ziedmahdi !

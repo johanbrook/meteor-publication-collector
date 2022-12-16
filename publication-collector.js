@@ -1,8 +1,8 @@
-import { Meteor } from 'meteor/meteor';
-import { Match, check } from 'meteor/check';
-import { Mongo } from 'meteor/mongo';
-import { MongoID } from 'meteor/mongo-id';
-import { EventEmitter } from 'events';
+import { Meteor } from "meteor/meteor";
+import { Match, check } from "meteor/check";
+import { Mongo } from "meteor/mongo";
+import { MongoID } from "meteor/mongo-id";
+import { EventEmitter } from "events";
 
 const validMongoId = Match.OneOf(String, Mongo.ObjectID);
 
@@ -12,7 +12,6 @@ const validMongoId = Match.OneOf(String, Mongo.ObjectID);
   over a socket it just collects data.
 */
 export class PublicationCollector extends EventEmitter {
-
   constructor(opts = {}) {
     super();
     check(opts.userId, Match.Optional(String));
@@ -24,7 +23,7 @@ export class PublicationCollector extends EventEmitter {
     this.userId = opts.userId;
     this._idFilter = {
       idStringify: MongoID.idStringify,
-      idParse: MongoID.idParse
+      idParse: MongoID.idParse,
     };
     this._isDeactivated = () => {};
 
@@ -41,11 +40,12 @@ export class PublicationCollector extends EventEmitter {
     const handler = Meteor.server.publish_handlers[name];
 
     if (!handler) {
-      throw new Error(`PublicationCollector: Couldn't find publication "${name}"! Did you misspell it?`);
+      throw new Error(
+        `PublicationCollector: Couldn't find publication "${name}"! Did you misspell it?`
+      );
     }
 
     return new Promise((resolve, reject) => {
-
       const done = (...res) => {
         callback && callback(...res);
         resolve(...res);
@@ -61,7 +61,7 @@ export class PublicationCollector extends EventEmitter {
       };
 
       // adds a one time listener function for the "ready" event
-      this.once('ready', (collections) => {
+      this.once("ready", (collections) => {
         if (this.delayInMs) {
           Meteor.setTimeout(() => {
             // collections is out of date, so we need to regenerate
@@ -75,8 +75,13 @@ export class PublicationCollector extends EventEmitter {
       });
 
       const result = handler.call(this, ...args);
-
-      this._publishHandlerResult(result);
+      if (typeof result?.then === "function") {
+        result.then((resolvedResult) => {
+          this._publishHandlerResult(resolvedResult);
+        });
+      } else {
+        this._publishHandlerResult(result);
+      }
     });
   }
 
@@ -92,9 +97,16 @@ export class PublicationCollector extends EventEmitter {
       cursors.push(res);
     } else if (Array.isArray(res)) {
       // check all the elements are cursors
-      const areCursors = res.reduce((valid, cur) => valid && this._isCursor(cur), true);
+      const areCursors = res.reduce(
+        (valid, cur) => valid && this._isCursor(cur),
+        true
+      );
       if (!areCursors) {
-        this.error(new Error('PublicationCollector: Publish function returned an array of non-Cursors'));
+        this.error(
+          new Error(
+            "PublicationCollector: Publish function returned an array of non-Cursors"
+          )
+        );
         return;
       }
       // find duplicate collection names
@@ -102,9 +114,11 @@ export class PublicationCollector extends EventEmitter {
       for (let i = 0; i < res.length; ++i) {
         const collectionName = res[i]._getCollectionName();
         if ({}.hasOwnProperty.call(collectionNames, collectionName)) {
-          this.error(new Error(
-            `PublicationCollector: Publish function returned multiple cursors for collection ${collectionName}`
-          ));
+          this.error(
+            new Error(
+              `PublicationCollector: Publish function returned multiple cursors for collection ${collectionName}`
+            )
+          );
           return;
         }
         collectionNames[collectionName] = true;
@@ -114,7 +128,11 @@ export class PublicationCollector extends EventEmitter {
       // truthy values other than cursors or arrays are probably a
       // user mistake (possible returning a Mongo document via, say,
       // `coll.findOne()`).
-      this.error(new Error('PublicationCollector: Publish function can only return a Cursor or an array of Cursors'));
+      this.error(
+        new Error(
+          "PublicationCollector: Publish function can only return a Cursor or an array of Cursors"
+        )
+      );
     }
 
     if (cursors.length > 0) {
@@ -142,7 +160,7 @@ export class PublicationCollector extends EventEmitter {
     this._ensureCollectionInRes(collection);
 
     // Make sure to ignore the _id in fields
-    const addedDocument = _.extend({_id: id}, _.omit(fields, '_id'));
+    const addedDocument = _.extend({ _id: id }, _.omit(fields, "_id"));
     this._documents[collection][id] = addedDocument;
   }
 
@@ -153,7 +171,7 @@ export class PublicationCollector extends EventEmitter {
     this._ensureCollectionInRes(collection);
 
     const existingDocument = this._documents[collection][id];
-    const fieldsNoId = _.omit(fields, '_id');
+    const fieldsNoId = _.omit(fields, "_id");
 
     if (existingDocument) {
       _.extend(existingDocument, fieldsNoId);
@@ -182,17 +200,17 @@ export class PublicationCollector extends EventEmitter {
 
   ready() {
     // Synchronously calls each of the listeners registered for the "ready" event
-    this.emit('ready', this._generateResponse());
+    this.emit("ready", this._generateResponse());
   }
 
   onStop(callback) {
     // Adds a one time listener function for the "stop" event
-    this.once('stop', callback);
+    this.once("stop", callback);
   }
 
   stop() {
     // Synchronously calls each of the listeners registered for the "stop" event
-    this.emit('stop');
+    this.emit("stop");
   }
 
   error(error) {
